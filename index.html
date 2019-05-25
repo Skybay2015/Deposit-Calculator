@@ -1,28 +1,93 @@
 <!DOCTYPE HTML>
 <html>
-
 <head>
-<style>
-  .norification {
-    padding: 15px;
-    background-color: blue;
-    color: brown;
-  }
- </style>
+  <style>
+    #contents {
+      padding: 5px;
+      border: 1px green solid;
+    }
+  </style>
 
-  <meta charset="utf-8">
 </head>
 
 <body>
+  <input type="text" id='text'>
+  <button class="submit" id='submit'>
+    Add new ToDo
+  </button>
+  <ul id="container"></ul>
+
+  <script>
+    class TodoList {
+      constructor(container) {
+        this.container = container;
+        this.container.addEventListener('click', this.deleteTodo.bind(this));
+        this.container.addEventListener('click', this.doneTodo.bind(this))
+        this.submit = document.querySelector('#submit');
+        this.input = document.querySelector('#text');
+        this.submit.addEventListener('click', this.addTodo.bind(this));
+
+        this.dataIndex = 0;
+      }
+      addTodo() {
+        this.renderTodo();
+        this.input.value = '';
+      }
+
+      deleteTodo(e) {
+        let target = e.target;
+        if (target.tagName == 'BUTTON') {
+          let li = target.closest('li');
+          if (!li) return;
+          this.container.removeChild(li)
+        }
+      }
+
+      doneTodo(e) {
+        let target = e.target;
+        if (target.tagName == 'INPUT') {
+          let li = target.closest('li');
+          if (!li) return
+          li.dataset.completed = JSON.parse(li.dataset.completed) ? false : true;
+          this.checkCompleted(li);
+        }
+      }
 
 
- <div id="container">
+      checkCompleted(elem) {
+        if (JSON.parse(elem.dataset.completed) == true ) {
+          console.log('a')
+          elem.style.textDecoration = 'line-through';
+        } else {
+          console.log('b')
+          elem.style.textDecoration = ''
+        }
+      }
 
- </div>
+      renderTodo() {
+        let newToDo = document.createElement('li');
+        let checkbox = document.createElement('input');
+        let deleteBtn = document.createElement('button')
+        deleteBtn.innerHTML = `Delete ${this.dataIndex}`;
+        newToDo.innerHTML = this.input.value;
+        newToDo.setAttribute('data-index', this.dataIndex++)
+        newToDo.setAttribute('data-completed', false);
+        checkbox.type = "checkbox";
+        newToDo.append(checkbox, deleteBtn);
+        container.append(newToDo);
+      }
 
+
+
+    }
+
+        
+
+      
+
+      let obj = new TodoList(document.querySelector('#container'));
+
+    </script>
+  </body>
   
-  <script src="index.js"></script>
-
-</body>
-
-</html>
+  </html>
