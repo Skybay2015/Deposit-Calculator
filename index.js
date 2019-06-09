@@ -1,62 +1,94 @@
 class Main {
-    constructor(elem) {
-        this.container = elem;
-        this.container.addEventListener('mouseover', this.showNotification.bind(this));
-        this.container.addEventListener('mouseout', this.hideNotification.bind(this));
-        this.notification = new Notification().notification;
-        this._showingNotification = null;
-        this._currentElement = null;
+    constructor(table) {
+        this.table = table;
+        this.table.addEventListener('click', this.selectPart.bind(this), true);
+        this.currentTd = null;
     }
-    _getCords(target) {
-        return new Cords(target);
-    }
-    showNotification(e) {
+
+    selectPart(e) {
         let target = e.target;
-        if (this._currentElement == target) return;
-        if (target.dataset.tooltip) {
-            const cords = this._getCords(target);
-            const notification = this.notification;
-            const tooltip = target.dataset.tooltip;
-            notification.textContent = tooltip;
-            notification.className = 'tooltip';
-            this.container.append(notification);
-            notification.style.top = cords.targetCords.top - notification.offsetHeight - 5 + 'px';
-            if (notification.getBoundingClientRect().top < 0) {
-                notification.style.top = cords.targetCords.top + target.offsetHeight + 5 + 'px';
-            }
-            notification.style.left = cords.targetCords.left + (target.offsetWidth - notification.offsetWidth) / 2 + 'px';
-            this._showingNotification = notification;
-            this._currentElement = target;
+        let elements = this._createElements();
+        if (target.closest('td')) {
+            if (this.currentTd) return;
+            let td = target.closest('td');
+            let tdParent = td.parentElement;
+            this.currentTd = td;
+
+            elements.okBtn.innerHTML = 'Ok';
+            elements.cancelBtn.innerHTML = 'Cancel';
+
+            elements.okBtn.addEventListener(
+                'click',
+                this._onOk.bind(
+                    this,
+                    elements.textarea,
+                    elements.cancelBtn,
+                    elements.okBtn,
+                ),
+            );
+            elements.cancelBtn.addEventListener(
+                'click',
+                this._cancelBtn.bind(
+                    this,
+                    elements.textarea,
+                    elements.cancelBtn,
+                    elements.okBtn,
+                ),
+            );
+
+            elements.textarea.value = td.innerHTML;
+            elements.textarea.style.height =
+                td.offsetHeight - 4 + 'px';
+            elements.textarea.style.width =
+                td.clientWidth - 6 + 'px';
+            td.style.display = 'none';
+
+            tdParent.insertBefore(elements.textarea, td);
+            elements.textarea.insertAdjacentElement(
+                'afterend',
+                elements.okBtn,
+            );
+            elements.textarea.insertAdjacentElement(
+                'afterend',
+                elements.cancelBtn,
+            ),
+                elements.textarea.focus();
         }
     }
 
-    hideNotification(e) {
-        if (!this._currentElement) return;
-        let relatedTarget = e.relatedTarget;
-        while (relatedTarget) {
-            if (relatedTarget == this._currentElement) return
-            relatedTarget = relatedTarget.parentElement;
+    _createElements () {
+        return {
+            textarea : document.createElement('textarea'),
+            okBtn : document.createElement('button'),
+            cancelBtn: document.createElement('button')
+
         }
-        console.log(relatedTarget, 'related')
-        console.log(this._currentElement, 'current')
-        this.container.removeChild(this._showingNotification)
-        this._showingNotification = null;
-        this._currentElement = null;
+    }
+
+    _onOk(textarea, cnclBtn, okBtn) {
+        
+        textarea.remove();
+        cnclBtn.remove();
+        okBtn.remove();
+
+        this.currentTd.innerHTML = textarea.value;
+        
+        this.currentTd.style.display = '';
+        this.currentTd = null;
+        
+    }
+
+    _cancelBtn(textarea, cnclBtn, okBtn) {
+        textarea.remove();
+        cnclBtn.remove();
+        okBtn.remove();
+
+        this.currentTd.style.display = '';
+        this.currentTd = null;
     }
 }
 
 
-
-class Cords {
-    constructor(target) {
-        this.targetCords = target.getBoundingClientRect();
-    }
-}
-
-class Notification {
-    constructor() {
-        this.notification = document.createElement('div');
-    }
-}
-
-let obj = new Main(document.querySelector('#house'))
+let obj = new Main ( 
+    document.querySelector('#bagua-table')
+)
