@@ -1,94 +1,97 @@
 class Main {
-    constructor(table) {
-        this.table = table;
-        this.table.addEventListener('click', this.selectPart.bind(this), true);
-        this.currentTd = null;
+    constructor(options) {
+        this.input = options.input;
+        this.select = options.select;
+        this.checkbox = options.checkbox;
+        this.moneyBefore = options.moneyBefore;
+        this.moneyAfter = options.moneyAfter;
+        this.heightAfter = options.heightAfter;
+
+
+        this._monthlyIncrease = 0.01;
+
+        this.moneyBefore.innerHTML = this.input.value 
+
+        this.input.addEventListener(
+            'keypress',
+            this.writeOnlyNumbers.bind(this),
+        );
+        this.input.addEventListener(
+            'input',
+            this.writeMoneyBefore.bind(this),
+        );
+        
+        this.select.addEventListener('change', this.writeMoneyAfter.bind(this));
+        this.checkbox.addEventListener('click', this.writeMoneyAfter.bind(this));
+
+
+        this.writeMoneyAfter();
     }
 
-    selectPart(e) {
-        let target = e.target;
-        let elements = this._createElements();
-        if (target.closest('td')) {
-            if (this.currentTd) return;
-            let td = target.closest('td');
-            let tdParent = td.parentElement;
-            this.currentTd = td;
+    writeOnlyNumbers(e) {
+        e.preventDefault();
+        if (e.keyCode < 48 || e.keyCode > 57) return;
+        this.input.value += this._getChar(e);
+        this.moneyBefore.innerHTML = this.input.value;
 
-            elements.okBtn.innerHTML = 'Ok';
-            elements.cancelBtn.innerHTML = 'Cancel';
+        this.writeMoneyAfter()
+    }
 
-            elements.okBtn.addEventListener(
-                'click',
-                this._onOk.bind(
-                    this,
-                    elements.textarea,
-                    elements.cancelBtn,
-                    elements.okBtn,
-                ),
-            );
-            elements.cancelBtn.addEventListener(
-                'click',
-                this._cancelBtn.bind(
-                    this,
-                    elements.textarea,
-                    elements.cancelBtn,
-                    elements.okBtn,
-                ),
-            );
-
-            elements.textarea.value = td.innerHTML;
-            elements.textarea.style.height =
-                td.offsetHeight - 4 + 'px';
-            elements.textarea.style.width =
-                td.clientWidth - 6 + 'px';
-            td.style.display = 'none';
-
-            tdParent.insertBefore(elements.textarea, td);
-            elements.textarea.insertAdjacentElement(
-                'afterend',
-                elements.okBtn,
-            );
-            elements.textarea.insertAdjacentElement(
-                'afterend',
-                elements.cancelBtn,
-            ),
-                elements.textarea.focus();
+    writeMoneyBefore() {
+        if (!this.input.value) {
+            this.moneyBefore.textContent = 0;
+            console.log('works');
+        } else {
+            this.moneyBefore.innerHTML = this.input.value;
+            this.writeMoneyAfter();
         }
+        
     }
 
-    _createElements () {
-        return {
-            textarea : document.createElement('textarea'),
-            okBtn : document.createElement('button'),
-            cancelBtn: document.createElement('button')
+    writeMoneyAfter() {
+        const money = +this.input.value;
 
+        let months = this.select.value;
+        let sum = money;
+
+        if (this.checkbox.checked) {
+            for (let i = 0; i < months; i++) {
+                sum = sum * (1 + this._monthlyIncrease);
+          } 
+        } else {
+          sum = money * (1 + this._monthlyIncrease * months);
+        } 
+        sum = Math.round(sum);
+
+        this.moneyAfter.innerHTML = sum;
+        this.heightAfter.style.height = `${sum/money * 100}px`
+    }
+
+    _getChar(event) {
+        if (event.which == null) {
+            if (event.keyCode < 32) return null;
+            return String.fromCharCode(event.keyCode); // IE
         }
-    }
 
-    _onOk(textarea, cnclBtn, okBtn) {
-        
-        textarea.remove();
-        cnclBtn.remove();
-        okBtn.remove();
+        if (event.which != 0 && event.charCode != 0) {
+            if (event.which < 32) return null;
+            return String.fromCharCode(event.which); // остальные
+        }
 
-        this.currentTd.innerHTML = textarea.value;
-        
-        this.currentTd.style.display = '';
-        this.currentTd = null;
-        
-    }
-
-    _cancelBtn(textarea, cnclBtn, okBtn) {
-        textarea.remove();
-        cnclBtn.remove();
-        okBtn.remove();
-
-        this.currentTd.style.display = '';
-        this.currentTd = null;
+        return null; // специальная клавиша
     }
 }
 
 
-let obj = new Main ( 
-    document.querySelector('#bagua-table')
-)
+
+
+let obj = new Main( {
+    input: document.querySelector('input[name="money"]'),
+    select: document.querySelector('select[name="months"]'),
+    checkbox: document.querySelector('input[name="capitalization"]'),
+    moneyBefore: document.querySelector('#money-before'),
+    moneyAfter: document.querySelector('#money-after'),
+    heightAfter: document.querySelector('#height-after')
+})
+    
+    
